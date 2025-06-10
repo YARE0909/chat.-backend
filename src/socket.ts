@@ -1,11 +1,11 @@
-import { Server } from 'socket.io';
-import jwt from 'jsonwebtoken';
+import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 
 let io: Server;
 
 export function initSocket(server: any) {
   io = new Server(server, {
-    cors: { origin: '*' }
+    cors: { origin: "*" },
   });
 
   io.use((socket, next) => {
@@ -19,11 +19,14 @@ export function initSocket(server: any) {
     }
   });
 
-  io.on('connection', (socket) => {
-    console.log('Socket connected:', (socket as any).user.email);
-    socket.on('message', (msg) => {
-      console.log('Message received:', msg);
-      socket.broadcast.emit('message', msg);
+  io.on("connection", (socket) => {
+    console.log("User Connected:", (socket as any).user.email);
+    socket.on("disconnect", () => {
+      console.log("User Disconnected:", (socket as any).user.email);
+    });
+    socket.on("message", (msg) => {
+      console.log("Message received:", msg);
+      socket.broadcast.emit("message", msg);
     });
   });
 
