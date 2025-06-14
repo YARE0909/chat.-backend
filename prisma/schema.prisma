@@ -7,9 +7,84 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ChatType {
+  DM
+  GC
+}
+
+enum MessageStatusType {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum MessageTypesType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+  VIDEO
+}
+
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  name     String
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  chats    ChatMember[]    @relation("UserChats")
+  messages Message[]       @relation("AuthorMessages")
+  statuses MessageStatus[] @relation("UserStatuses")
+}
+
+model Chat {
+  id        Int      @id @default(autoincrement())
+  type      ChatType @default(DM)
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  members  ChatMember[] @relation("ChatMembers")
+  messages Message[]    @relation("ChatMessages")
+}
+
+model ChatMember {
+  chatId   Int
+  userId   Int
+  joinedAt DateTime @default(now())
+  isAdmin  Boolean  @default(false)
+
+  chat Chat @relation("ChatMembers", fields: [chatId], references: [id])
+  user User @relation("UserChats", fields: [userId], references: [id])
+
+  @@id([chatId, userId])
+}
+
+model Message {
+  id        Int              @id @default(autoincrement())
+  chatId    Int
+  authorId  Int
+  content   String
+  type      MessageTypesType
+  createdOn DateTime         @default(now())
+  updatedOn DateTime?
+
+  chat     Chat            @relation("ChatMessages", fields: [chatId], references: [id])
+  author   User            @relation("AuthorMessages", fields: [authorId], references: [id])
+  statuses MessageStatus[] @relation("MessageStatuses")
+}
+
+model MessageStatus {
+  id        Int               @id @default(autoincrement())
+  messageId Int
+  userId    Int
+  status    MessageStatusType
+  timestamp DateTime          @default(now())
+
+  message Message @relation("MessageStatuses", fields: [messageId], references: [id])
+  user    User    @relation("UserStatuses", fields: [userId], references: [id])
+
+  @@unique([messageId, userId, status])
 }
