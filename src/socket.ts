@@ -5,7 +5,7 @@ import {
   fetchChatListByUserId,
   fetchChatMessagesById,
 } from "./services/chat";
-import { createMessage } from "./services/message";
+import { createMessage, setMessageStatus } from "./services/message";
 import prisma from "./prisma";
 
 let io: Server;
@@ -80,8 +80,16 @@ export function initSocket(server: any) {
       }
       try {
         const res = await fetchChatMessagesById(chatId);
+        res.data.messages.map((message: any) => {
+          setMessageStatus({
+            messageId: message.id,
+            userId: (socket as any).user.id,
+            status: "READ",
+          });
+        });
+        console.log({ res });
         if (res.status === "success") {
-          io.to(socket.id).emit("chat-info", res);
+          io.to(`chat-${chatId}`).emit("chat-info", res);
         }
       } catch {
         io.to(socket.id).emit("general-error", {
